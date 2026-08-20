@@ -4,37 +4,53 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
-	"github.com/RyanTarnowski/steambackup/internal/wol"
-	"github.com/joho/godotenv"
+	"github.com/RyanTarnowski/steambackup/internal/env"
+	"github.com/RyanTarnowski/steambackup/internal/network"
 )
 
+const envPath = "./.env"
+
 func main() {
-	err := godotenv.Load()
+	err := env.LoadEnvironmentFile(envPath)
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error reading .env file %v", err)
 	}
 
-	// Access variables using the standard os package
 	mac := os.Getenv("SOURCE_MAC_ADDR")
+	ip := os.Getenv("SOURCE_IP_ADDR")
+
 	fmt.Println("MAC Address:", mac)
+	fmt.Println("IP Address:", ip)
 
-	fmt.Println("Sending WOL magic packet")
+	//return //Testing env reader
 
-	err = wol.WakeOnLan("")
+	fmt.Println("Sending WOL magic packet...")
+	err = network.WakeOnLan(mac)
 	if err != nil {
 		fmt.Println("Error sending magic packet:", err)
 	} else {
 		fmt.Println("Magic packet sent successfully!")
 	}
 
+	fmt.Println("Check port status...")
+	err = network.CheckPortStatus(ip, "445", 2*time.Second)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("Server is responding on port 445")
+	}
+
 	//TODO:
-	//1: WOL
-	//2: SMB connection
-	//3: File transfer
-	//4: Logging
-	//5: Email
-	//7: Run on a schedule
-	//8: Restore file back to source
+	//env vars - Done
+	//WOL - Done
+	//CheckPortStatus - in progress, add attempts args
+	//SMB connection
+	//File transfer
+	//Logging
+	//Email
+	//Run on a schedule
+	//Restore file back to source
 
 }

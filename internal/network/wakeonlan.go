@@ -1,4 +1,4 @@
-package wol
+package network
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func WakeOnLan(macAddr string) error {
 	//create the magic packet
 	//magic packet consists of 6 bytes of 0xFF
 	//followed by the target device's 6-byte MAC address repeated 16 times.
-	var packet [102]byte
+	var packet [102]byte //6 bytes of 0xFF + 96 (6 * 16) = 102
 	for i := 0; i < 6; i++ {
 		packet[i] = 0xFF
 	}
