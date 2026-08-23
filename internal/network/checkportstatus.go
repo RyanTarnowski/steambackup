@@ -6,14 +6,13 @@ import (
 	"time"
 )
 
-func CheckPortStatus(host, port string, timeout time.Duration) error {
+func CheckPortStatus(host, port string, attempts int, timeout, delay time.Duration) error {
 	address := net.JoinHostPort(host, port)
 
 	//Run a loop with a delay that attempts to connect to the host via the port
 	//return when connection is successful
-	//TODO: Only allow X attempts before returning an err
-	for {
-		fmt.Println("checking port...")
+	for i := range attempts {
+		fmt.Printf("Attempt #%v checking port...\n", i+1)
 		conn, err := net.DialTimeout("tcp", address, timeout)
 		if err == nil {
 			conn.Close()
@@ -21,6 +20,8 @@ func CheckPortStatus(host, port string, timeout time.Duration) error {
 		} else {
 			fmt.Println("Error:", err)
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(delay)
 	}
+
+	return fmt.Errorf("Failed to establish connection to %s:%s after %v attempts.", host, port, attempts)
 }
