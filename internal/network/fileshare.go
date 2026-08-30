@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"errors"
 	"path/filepath"
 
 	"github.com/hirochachacha/go-smb2"
@@ -137,8 +138,11 @@ func copyFileRemote(srcFS *smb2.RemoteFileSystem, dstFS *smb2.RemoteFileSystem, 
 	}
 	defer srcFile.Close()
 
-	dstFile, err := dstFS.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	dstFile, err := dstFS.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0644)
 	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return nil //skip over the file if it exists
+		}
 		return err
 	}
 	defer dstFile.Close()

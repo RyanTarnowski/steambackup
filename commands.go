@@ -52,24 +52,24 @@ func getCommands() map[string]cliCommand {
 		 	description: "Lists source directory (lsd)",
 		 	callback:    commandListSourceDirectory,
 		},
-		"ldd": {
-		 	name:        "ldd",
-		 	description: "Lists destination directory (ldd)",
+		"lbd": {
+		 	name:        "lbd",
+		 	description: "Lists backup directory (lbd)",
 		 	callback:    commandListDestinationDirectory,
 		},
 		"fb": {
 		 	name:        "fb",
-		 	description: "Performs a full backup (fb) of the source directory to the destination directory",
+		 	description: "Performs a full backup (fb) of the source directory to the backup directory",
 		 	callback:    commandFullBackup,
 		},
 		"bbn": {
 		 	name:        "bbn",
-		 	description: "Performs a backup by name (bbn) of the source directory to the destination directory",
+		 	description: "Performs a backup by name (bbn) of the source directory to the backup directory",
 		 	callback:    commandBackupByName,
 		},
 		"rbn": {
 		 	name:        "rbn",
-		 	description: "Performs a retore by name (rbn) of the destination directory to the source directory",
+		 	description: "Performs a retore by name (rbn) of the backup directory to the source directory",
 		 	callback:    commandRestoreByName,
 		},
 	}
@@ -132,13 +132,13 @@ func commandListSourceDirectory(cfg *config, args ...string) error {
 }
 
 func commandListDestinationDirectory(cfg *config, args ...string) error {
-	fmt.Printf("\nDestination Directory:\n")
+	fmt.Printf("\nBackup Directory:\n")
 	fmt.Println(horizontalLine)
-	err := network.PrintSMBDirectory(cfg.destIP + smbPort, cfg.destShareName, cfg.shareUsername, cfg.sharePassword, cfg.destBackupDir + "/BackupTest")
+	err := network.PrintSMBDirectory(cfg.destIP + smbPort, cfg.destShareName, cfg.shareUsername, cfg.sharePassword, cfg.destBackupDir)
 
 	if err != nil {
-		log.Fatalf("Failed to connect to destination: %v", err)
-		return fmt.Errorf("Failed to connect to destination: %v", err)
+		log.Fatalf("Failed to connect to backup: %v", err)
+		return fmt.Errorf("Failed to connect to backup: %v", err)
 	}
 
 	fmt.Println(horizontalLine)
@@ -159,9 +159,7 @@ func commandBackupByName(cfg *config, args ...string) error {
 	fmt.Printf("\nBackup by Name:\n")
 	fmt.Println(horizontalLine)
 
-	if len(args) != 1 {
-		fmt.Printf("%v", args)
-		fmt.Println(len(args))
+	if len(args) != 1 || args[0] == "" {
 		return errors.New("Source directory name required. Use command 'lsd' to view source directories")
 	}
 
@@ -176,14 +174,13 @@ func commandBackupByName(cfg *config, args ...string) error {
 	//Connect to destination
 	dstFS, dstCleanup, err := network.ConnectSMB(cfg.destIP + smbPort, cfg.shareUsername, cfg.sharePassword, cfg.destShareName)
 	if err != nil {
-		log.Fatalf("Failed to connect to destination: %v", err)
-		return fmt.Errorf("Failed to connect to destination: %v", err)
+		log.Fatalf("Failed to connect to backup: %v", err)
+		return fmt.Errorf("Failed to connect to backup: %v", err)
 	}
 	defer dstCleanup()
 
 	srcFolder := args[0]
 	dstFolder := filepath.ToSlash(filepath.Join(cfg.destBackupDir, srcFolder))
-	dstFolder = filepath.ToSlash(filepath.Join(cfg.destBackupDir, "BackupTest", srcFolder)) //for testing, remove when ready
 
 	fmt.Printf("Starting backup of (%s) to (%s)...\n", srcFolder, dstFolder)
 	
@@ -203,10 +200,8 @@ func commandRestoreByName(cfg *config, args ...string) error {
 	fmt.Printf("\nRestore by Name:\n")
 	fmt.Println(horizontalLine)
 
-	if len(args) != 1 {
-		fmt.Printf("%v", args)
-		fmt.Println(len(args))
-		return errors.New("Source directory name required. Use command 'ldd' to view destination directories")
+	if len(args) != 1 || args[0] == "" {
+		return errors.New("Source directory name required. Use command 'lbd' to view backup directories")
 	}
 
 	//Connect to source
@@ -220,19 +215,19 @@ func commandRestoreByName(cfg *config, args ...string) error {
 	//Connect to destination
 	dstFS, dstCleanup, err := network.ConnectSMB(cfg.destIP + smbPort, cfg.shareUsername, cfg.sharePassword, cfg.destShareName)
 	if err != nil {
-		log.Fatalf("Failed to connect to destination: %v", err)
-		return fmt.Errorf("Failed to connect to destination: %v", err)
+		log.Fatalf("Failed to connect to backup: %v", err)
+		return fmt.Errorf("Failed to connect to backup: %v", err)
 	}
 	defer dstCleanup()
 
-	dstFolder := args[0]
-	srcFolder := filepath.ToSlash(filepath.Join(cfg.destBackupDir, dstFolder))
-	srcFolder = filepath.ToSlash(filepath.Join(cfg.destBackupDir, "BackupTest")) //for testing, remove when ready
+	dstFolder := filepath.ToSlash(filepath.Join(cfg.destBackupDir, args[0]))
+	// srcFolder := filepath.ToSlash(filepath.Join(cfg.srcBackupDir, "BackupTest", args[0]))
+	srcFolder := filepath.ToSlash(filepath.Join(cfg.srcBackupDir, args[0]))
 
 	fmt.Printf("Starting backup of (%s) to (%s)...\n", dstFolder, srcFolder)
 	
 	//recursive copy operation
-	err = network.CopyFolderRemote(dstFS, srcFS, dstFolder,srcFolder)
+	err = network.CopyFolderRemote(dstFS, srcFS, dstFolder, srcFolder)
 	if err != nil {
 		log.Fatalf("Restore failed: %v", err)
 		return fmt.Errorf("Restore failed: %v", err)

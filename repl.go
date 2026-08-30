@@ -30,6 +30,7 @@ func startRepl() {
 		if scanner.Scan() {
 			//Cut the cmd out on the input string and consider the remaining text as args
 			cmd, args, _ := strings.Cut(scanner.Text(), " ")
+			cmd = strings.ToLower(cmd)
 
 			if command, ok := getCommands()[cmd]; ok {
 					err := command.callback(&cfg, args)
