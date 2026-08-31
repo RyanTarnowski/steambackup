@@ -28,6 +28,7 @@ type config struct {
 	sharePassword      string
 }
 
+const smbPort = ":445"
 const horizontalLine = "*********************************************************"
 
 func getCommands() map[string]cliCommand {
@@ -149,8 +150,35 @@ func commandFullBackup(cfg *config, args ...string) error {
 	fmt.Printf("\nFull Backup:\n")
 	fmt.Println(horizontalLine)
 
-	fmt.Println("This feature is not ready")
+	//Connect to source
+	srcFS, srcCleanup, err := network.ConnectSMB(cfg.srcIP + smbPort, cfg.shareUsername, cfg.sharePassword, cfg.srcShareName)
+	if err != nil {
+		log.Fatalf("Failed to connect to source: %v", err)
+		return fmt.Errorf("Failed to connect to source: %v", err)
+	}
+	defer srcCleanup()
 
+	//Connect to destination
+	dstFS, dstCleanup, err := network.ConnectSMB(cfg.destIP + smbPort, cfg.shareUsername, cfg.sharePassword, cfg.destShareName)
+	if err != nil {
+		log.Fatalf("Failed to connect to backup: %v", err)
+		return fmt.Errorf("Failed to connect to backup: %v", err)
+	}
+	defer dstCleanup()
+
+	srcFolder := cfg.srcBackupDir
+	dstFolder := cfg.destBackupDir
+
+	fmt.Printf("Starting backup of (%s) to (%s)...\n", srcFolder, dstFolder)
+	
+	//recursive copy operation
+	err = network.CopyFolderRemote(srcFS, dstFS, srcFolder, dstFolder)
+	if err != nil {
+		log.Fatalf("Backup failed: %v", err)
+		return fmt.Errorf("Backup failed: %v", err)
+	}
+
+	fmt.Printf("\nFull Backup completed successfully!\n")
 	fmt.Println(horizontalLine)
 	return nil
 }
