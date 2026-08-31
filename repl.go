@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
 )
 
-func startRepl() {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	cfg := config{
+func loadConfig() config {
+	return config{
 		srcMAC: os.Getenv("SRC_MAC_ADDR"),
 		srcIP: os.Getenv("SRC_IP_ADDR"),
 		srcShareName: os.Getenv("SRC_SHARENAME"),
@@ -22,6 +19,11 @@ func startRepl() {
 		shareUsername: os.Getenv("SHARE_USERNAME"),
 		sharePassword: os.Getenv("SHARE_PASSWORD"),
 	}
+}
+
+func startRepl() {
+	scanner := bufio.NewScanner(os.Stdin)
+	cfg := loadConfig() 
 
 	for {
 		fmt.Println()
@@ -39,7 +41,28 @@ func startRepl() {
 					}
 				} else {
 					fmt.Println("Unknown command")
-				}
+			}
 		}
+	}
+}
+
+func startViaCmdLineArgs(cmd string) {
+	cfg := loadConfig()
+
+	fmt.Println()
+	fmt.Print("Steam Backup Utility > ")
+
+	if cmd != "fb" {
+		fmt.Println("Unknown command")
+		return
+	}
+
+	if command, ok := getCommands()[cmd]; ok {
+			err := command.callback(&cfg, "")
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			fmt.Println("Unknown command")
 	}
 }
