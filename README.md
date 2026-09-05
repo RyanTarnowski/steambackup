@@ -1,8 +1,11 @@
 # Steam Backup
 
 ## Motivation
+Have you seen storage prices lately? My motivation for "Steam Backup" was twofold: 
+   1. Create a way to transfer raw game files to and from my gaming PC to my NAS.
+   2. Develop a project in GO, which I'm currently learning via Boot.dev
 
-
+This could certainly have been accomplished with some scripting and robocopy, but I was looking for a practical application to help develop my GO skills.
 
 
 ## Prerequisites
@@ -29,7 +32,6 @@
 go get -v
 ```
 
-
 ## Environment Variables
 
 Create a `.env` file in the project root with the following configuration:
@@ -37,7 +39,7 @@ Create a `.env` file in the project root with the following configuration:
 ### Source Configuration
 - `SRC_MAC_ADDR`: MAC address of the source machine (e.g., `11:22:33:44:55:66`)
 - `SRC_IP_ADDR`: IP address of the source machine (e.g., `192.168.1.123`)
-- `SRC_SHARENAME`: Name of the shared folder on the source (e.g., `steam`)
+- `SRC_SHARENAME`: Name of the shared folder on the source (e.g., `steam` this should be a share of your current steam game files location)
 - `SRC_BACKUP_DIR`: Relative path for backup storage on source (e.g., `.` for current directory)
 
 ### Destination Configuration
